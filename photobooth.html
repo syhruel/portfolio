@@ -1,0 +1,1223 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SnapFrame — Photobooth</title>
+<link href="https://fonts.googleapis.com/css2?family=Abril+Fatface&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#faf6f0;--surface:#fff;--surface2:#f2ede5;--surface3:#ece6dd;
+  --border:rgba(0,0,0,0.08);--border2:rgba(0,0,0,0.14);
+  --text:#1a1410;--muted:#8a7e72;--pink:#e8506a;--pink2:#d63e58;
+  --dark:#1a1410;--radius:18px;--green:#3db87a;
+}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
+body::before{content:'';position:fixed;inset:0;background-image:radial-gradient(circle,rgba(0,0,0,0.05) 1px,transparent 1px);background-size:24px 24px;pointer-events:none;z-index:0}
+
+/* ── HEADER ── */
+header{position:relative;z-index:10;padding:1.25rem 2rem;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border);background:var(--surface)}
+.logo{font-family:'Abril Fatface',serif;font-size:2rem;color:var(--dark);letter-spacing:-.02em}
+.logo span{color:var(--pink)}
+.nav-tabs{display:flex;gap:4px;background:var(--surface2);padding:4px;border-radius:12px}
+.nav-tab{padding:.45rem 1.1rem;border-radius:9px;border:none;background:transparent;font-family:'DM Sans',sans-serif;font-size:.8rem;font-weight:500;color:var(--muted);cursor:pointer;transition:all .2s;white-space:nowrap}
+.nav-tab.active{background:var(--surface);color:var(--dark);box-shadow:0 1px 6px rgba(0,0,0,0.1)}
+
+/* ── PAGES ── */
+.page{display:none;position:relative;z-index:1;max-width:1200px;margin:0 auto;padding:2rem 1.5rem 5rem}
+.page.active{display:block}
+
+/* ── CARDS ── */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:2rem;box-shadow:0 2px 20px rgba(0,0,0,.04)}
+.card-title{font-family:'Abril Fatface',serif;font-size:1.3rem;color:var(--dark);margin-bottom:1.5rem;display:flex;align-items:center;gap:10px}
+.ctrl-label{font-size:.7rem;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);font-weight:500;margin-bottom:6px}
+
+/* ── BUTTONS ── */
+.btn-primary{padding:.8rem 2rem;background:var(--pink);color:#fff;border:none;border-radius:12px;font-family:'Abril Fatface',serif;font-size:1rem;cursor:pointer;transition:all .2s}
+.btn-primary:hover{background:var(--pink2);transform:translateY(-1px);box-shadow:0 6px 20px rgba(232,80,106,.3)}
+.btn-primary:disabled{opacity:.4;cursor:not-allowed;transform:none;box-shadow:none}
+.btn-ghost{padding:.65rem 1.2rem;background:transparent;border:1.5px solid var(--border2);border-radius:10px;color:var(--muted);font-family:'DM Sans',sans-serif;font-size:.82rem;cursor:pointer;transition:all .2s}
+.btn-ghost:hover{border-color:var(--text);color:var(--text)}
+.chip-row{display:flex;gap:8px;flex-wrap:wrap}
+.chip{padding:6px 14px;border:1.5px solid var(--border2);border-radius:20px;background:transparent;color:var(--muted);font-size:.8rem;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .2s}
+.chip.active{border-color:var(--pink);color:var(--pink);background:rgba(232,80,106,.07);font-weight:500}
+
+/* ═══════════════════════════
+   PAGE 1 — PILIH FRAME
+═══════════════════════════ */
+.pg-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:2rem;flex-wrap:wrap;gap:1rem}
+.pg-header h1{font-family:'Abril Fatface',serif;font-size:2rem}
+.pg-header p{font-size:.85rem;color:var(--muted);margin-top:3px}
+
+.frame-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:1.25rem}
+.frame-card{background:var(--surface);border:2px solid var(--border);border-radius:16px;overflow:hidden;cursor:pointer;transition:all .25s;position:relative}
+.frame-card:hover{border-color:rgba(232,80,106,.4);transform:translateY(-3px);box-shadow:0 12px 40px rgba(0,0,0,.1)}
+.frame-card.selected{border-color:var(--pink);box-shadow:0 0 0 3px rgba(232,80,106,.15)}
+.frame-thumb{width:100%;aspect-ratio:3/4;background:var(--surface2);display:flex;align-items:center;justify-content:center;overflow:hidden;position:relative}
+.frame-thumb img{width:100%;height:100%;object-fit:cover}
+.frame-thumb-empty{font-size:3rem;opacity:.3}
+.frame-card-body{padding:1rem}
+.frame-card-name{font-weight:600;font-size:.9rem;margin-bottom:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.frame-card-meta{font-size:.75rem;color:var(--muted)}
+.frame-card-badge{position:absolute;top:10px;right:10px;background:var(--pink);color:#fff;font-size:.62rem;font-weight:700;padding:3px 9px;border-radius:20px;text-transform:uppercase;letter-spacing:.05em}
+.frame-card-actions{display:flex;gap:6px;margin-top:.75rem}
+.fc-btn{flex:1;padding:.45rem;border-radius:8px;border:1.5px solid var(--border2);background:transparent;color:var(--muted);font-size:.75rem;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .2s}
+.fc-btn:hover{border-color:var(--pink);color:var(--pink)}
+.fc-btn.danger:hover{border-color:#e05;color:#e05}
+
+.empty-state{text-align:center;padding:5rem 2rem;color:var(--muted)}
+.empty-state-icon{font-size:4rem;margin-bottom:1rem;opacity:.4}
+.empty-state h2{font-family:'Abril Fatface',serif;font-size:1.5rem;margin-bottom:.5rem;color:var(--dark)}
+.empty-state p{font-size:.85rem;line-height:1.6;margin-bottom:1.5rem}
+
+.start-bar{position:sticky;bottom:1.5rem;z-index:50;display:flex;justify-content:center;pointer-events:none}
+.start-bar-inner{background:var(--dark);color:#fff;padding:1rem 2.5rem;border-radius:30px;display:flex;align-items:center;gap:1.25rem;box-shadow:0 8px 40px rgba(0,0,0,.25);pointer-events:all;transition:all .3s;opacity:0;transform:translateY(20px)}
+.start-bar-inner.show{opacity:1;transform:translateY(0)}
+.start-bar-label{font-size:.85rem;opacity:.7}
+.start-bar-name{font-family:'Abril Fatface',serif;font-size:1.1rem}
+
+/* ═══════════════════════════
+   PAGE 2 — EDITOR FRAME
+═══════════════════════════ */
+.editor-layout{display:grid;grid-template-columns:1fr 300px;gap:1.5rem;align-items:start}
+@media(max-width:860px){.editor-layout{grid-template-columns:1fr}}
+
+.editor-canvas-wrap{position:relative;background:repeating-conic-gradient(#e0dbd4 0% 25%,#f2ede5 0% 50%) 0 0/20px 20px;border-radius:14px;overflow:hidden;border:1px solid var(--border);cursor:default;user-select:none}
+#editorCanvas{display:block;width:100%;height:auto}
+
+.editor-panel{display:flex;flex-direction:column;gap:1.1rem}
+.editor-section{background:var(--surface2);border-radius:12px;padding:1.1rem}
+.editor-section-title{font-size:.72rem;text-transform:uppercase;letter-spacing:.1em;font-weight:600;color:var(--muted);margin-bottom:.75rem}
+
+.drop-zone{border:2px dashed rgba(232,80,106,.3);border-radius:12px;padding:2rem 1.5rem;text-align:center;cursor:pointer;transition:all .25s;position:relative;background:rgba(232,80,106,.02)}
+.drop-zone:hover,.drop-zone.over{border-color:var(--pink);background:rgba(232,80,106,.05)}
+.drop-zone input{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%}
+.drop-zone-icon{font-size:2rem;margin-bottom:8px}
+.drop-zone h3{font-size:.85rem;font-weight:500;margin-bottom:4px}
+.drop-zone p{font-size:.75rem;color:var(--muted)}
+
+input[type=text]{width:100%;padding:.65rem .9rem;border:1.5px solid var(--border2);border-radius:9px;font-family:'DM Sans',sans-serif;font-size:.88rem;background:var(--surface);color:var(--text);outline:none;transition:border-color .2s}
+input[type=text]:focus{border-color:var(--pink)}
+
+.slot-list{display:flex;flex-direction:column;gap:6px}
+.slot-item{display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:8px;background:var(--surface);border:1.5px solid var(--border);font-size:.8rem;cursor:pointer;transition:all .2s}
+.slot-item:hover{border-color:rgba(232,80,106,.4)}
+.slot-item.active{border-color:var(--pink);background:rgba(232,80,106,.05)}
+.slot-num{width:24px;height:24px;border-radius:50%;background:var(--pink);color:#fff;font-size:.68rem;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.slot-item:not(.active) .slot-num{background:var(--surface3)}
+.slot-item:not(.active) .slot-num{color:var(--muted)}
+.slot-coords{flex:1;font-size:.7rem;color:var(--muted);font-variant-numeric:tabular-nums}
+
+.tip-box{background:rgba(232,80,106,.06);border:1px solid rgba(232,80,106,.15);border-radius:9px;padding:.8rem 1rem;font-size:.75rem;color:var(--muted);line-height:1.6}
+.tip-box strong{color:var(--dark)}
+
+/* ═══════════════════════════
+   PAGE 3 — SESI FOTO
+═══════════════════════════ */
+.shoot-layout{display:grid;grid-template-columns:1fr 180px;gap:2rem;align-items:start}
+@media(max-width:800px){.shoot-layout{grid-template-columns:1fr}}
+
+.cam-wrap{position:relative;background:#f5f5f5;border-radius:14px;overflow:hidden;border:1px solid var(--border)}
+#liveCanvas{display:block;width:100%;height:auto}
+#cdEl{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-family:'Abril Fatface',serif;font-size:7rem;color:#fff;text-shadow:0 4px 30px rgba(232,80,106,.9);z-index:10;pointer-events:none;opacity:0}
+#flashEl{position:absolute;inset:0;background:#fff;z-index:9;pointer-events:none;opacity:0;transition:opacity .15s}
+.slot-badge{position:absolute;top:10px;left:50%;transform:translateX(-50%);background:rgba(232,80,106,.9);color:#fff;font-size:.75rem;font-weight:600;padding:4px 14px;border-radius:20px;letter-spacing:.05em;text-transform:uppercase;z-index:8;pointer-events:none;white-space:nowrap}
+
+@keyframes cdpop{0%{transform:scale(1.4);opacity:1}100%{transform:scale(1);opacity:1}}
+#cdEl.pop{animation:cdpop .35s ease-out;opacity:1}
+
+.pips{display:flex;gap:6px;margin-top:10px}
+.pip{flex:1;height:7px;border-radius:4px;background:var(--surface2);border:1px solid var(--border);transition:all .3s}
+.pip.done{background:var(--pink);border-color:var(--pink)}
+.pip.active{background:rgba(232,80,106,.45);border-color:var(--pink)}
+@keyframes pp{from{background:rgba(232,80,106,.3)}to{background:rgba(232,80,106,.7)}}
+.pip.active{animation:pp .8s infinite alternate}
+
+.shoot-ctrl{display:flex;flex-direction:column;gap:11px;margin-top:14px}
+.timer-row{display:flex;gap:5px}
+.tchip{flex:1;padding:6px 4px;border:1.5px solid var(--border2);border-radius:8px;background:transparent;color:var(--muted);font-size:.72rem;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .2s}
+.tchip.active{border-color:var(--pink);color:var(--pink);background:rgba(232,80,106,.06)}
+.tchip:disabled{opacity:.4;cursor:not-allowed}
+
+.shutter{width:100%;padding:1rem;border-radius:12px;border:none;background:var(--pink);color:#fff;font-family:'Abril Fatface',serif;font-size:1.1rem;cursor:pointer;transition:all .2s}
+.shutter:hover{background:var(--pink2);transform:translateY(-1px);box-shadow:0 6px 20px rgba(232,80,106,.3)}
+.shutter:disabled{opacity:.4;cursor:not-allowed;transform:none;box-shadow:none}
+.status{text-align:center;font-size:.82rem;color:var(--muted);min-height:1.2em}
+
+.cd-bar-wrap{height:4px;background:var(--surface2);border-radius:4px;overflow:hidden;margin-top:6px;display:none}
+.cd-bar-wrap.show{display:block}
+.cd-bar{height:100%;background:var(--pink);border-radius:4px;width:100%;transition:width linear}
+
+.strip-col{display:flex;flex-direction:column;gap:12px;align-items:center}
+.strip-lbl{font-size:.72rem;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);font-weight:500;align-self:stretch;display:flex;justify-content:space-between}
+#stripCanvas{display:none;width:160px;height:auto;border-radius:10px;box-shadow:0 4px 24px rgba(0,0,0,.13)}
+.strip-ph{width:160px;min-height:180px;background:var(--surface2);border:2px dashed var(--border2);border-radius:10px;display:flex;align-items:center;justify-content:center;text-align:center;padding:1.5rem .75rem;font-size:.75rem;color:var(--muted);line-height:1.5}
+
+/* ═══════════════════════════
+   PAGE 4 — HASIL
+═══════════════════════════ */
+.result-layout{display:grid;grid-template-columns:auto 1fr;gap:2.5rem;align-items:start}
+@media(max-width:700px){.result-layout{grid-template-columns:1fr}}
+.result-img{border-radius:12px;overflow:hidden;box-shadow:0 8px 40px rgba(0,0,0,.15);max-width:260px}
+#finalCanvas{display:block;width:100%;height:auto}
+.result-title{font-family:'Abril Fatface',serif;font-size:1.5rem;margin-bottom:.4rem}
+.result-sub{font-size:.83rem;color:var(--muted);margin-bottom:1.25rem;line-height:1.5}
+.result-btns{display:flex;flex-direction:column;gap:10px}
+.dl-btn{display:flex;align-items:center;gap:10px;padding:.85rem 1.2rem;border-radius:12px;border:1.5px solid var(--border2);background:var(--surface);color:var(--text);font-family:'DM Sans',sans-serif;font-size:.87rem;font-weight:500;cursor:pointer;transition:all .2s;width:100%}
+.dl-btn:hover{border-color:var(--pink);color:var(--pink);background:rgba(232,80,106,.04)}
+.dl-btn.primary{background:var(--pink);border-color:var(--pink);color:#fff}
+.dl-btn.primary:hover{background:var(--pink2);border-color:var(--pink2);color:#fff}
+.divider{height:1px;background:var(--border);margin:3px 0}
+
+/* ── NOTIF ── */
+.notif{position:fixed;bottom:2rem;left:50%;transform:translateX(-50%);background:var(--dark);color:#fff;padding:.65rem 1.4rem;border-radius:30px;font-size:.8rem;z-index:999;opacity:0;transition:opacity .3s;pointer-events:none;white-space:nowrap}
+.notif.show{opacity:1}
+
+/* ── MISC ── */
+.section-divider{display:flex;align-items:center;gap:.75rem;margin:1.5rem 0;color:var(--muted);font-size:.75rem}
+.section-divider::before,.section-divider::after{content:'';flex:1;height:1px;background:var(--border)}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">Snap<span>Frame</span></div>
+  <nav class="nav-tabs">
+    <button class="nav-tab active" onclick="showPage('page-pick')">🖼️ Pilih Frame</button>
+    <button class="nav-tab" onclick="showPage('page-editor')">✏️ Tambah Frame</button>
+  </nav>
+</header>
+
+<!-- ═══════════════════════════
+     PAGE: PILIH FRAME
+═══════════════════════════ -->
+<div class="page active" id="page-pick">
+  <div class="pg-header">
+    <div>
+      <h1>Pilih Frame</h1>
+      <p>Pilih frame yang sudah kamu buat, lalu mulai sesi foto.</p>
+    </div>
+    <button class="btn-primary" onclick="showPage('page-editor')">+ Tambah Frame Baru</button>
+  </div>
+
+  <div id="frame-grid-wrap">
+    <!-- filled by JS -->
+  </div>
+
+  <!-- sticky start bar -->
+  <div class="start-bar">
+    <div class="start-bar-inner" id="startBar">
+      <div>
+        <div class="start-bar-label">Frame dipilih</div>
+        <div class="start-bar-name" id="startBarName">—</div>
+      </div>
+      <button class="btn-primary" id="btnStartShoot" onclick="startShootSession()">Mulai Foto →</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════
+     PAGE: EDITOR FRAME
+═══════════════════════════ -->
+<div class="page" id="page-editor">
+  <div class="pg-header">
+    <div>
+      <h1>Tambah / Edit Frame</h1>
+      <p>Upload frame PNG, atur jumlah & posisi slot foto, lalu simpan.</p>
+    </div>
+  </div>
+
+  <div class="editor-layout">
+    <!-- LEFT: canvas -->
+    <div>
+      <div class="card-title" style="margin-bottom:1rem">🎨 Preview & Atur Slot</div>
+      <div class="editor-canvas-wrap" id="editorWrap">
+        <canvas id="editorCanvas"></canvas>
+      </div>
+      <div class="tip-box" style="margin-top:10px">
+        <strong>Cara pakai:</strong> Klik & seret di atas canvas untuk menggambar slot foto. Klik slot yang ada untuk memilih & memindahkan. Seret sudut/tepi untuk resize.
+      </div>
+    </div>
+
+    <!-- RIGHT: panel -->
+    <div class="editor-panel">
+
+      <!-- Upload -->
+      <div class="editor-section">
+        <div class="editor-section-title">1. Upload Frame PNG</div>
+        <div class="drop-zone" id="edDz">
+          <input type="file" accept="image/*" id="edFi">
+          <div class="drop-zone-icon">🗂️</div>
+          <h3>Seret atau klik</h3>
+          <p>Format PNG transparan dianjurkan</p>
+        </div>
+      </div>
+
+      <!-- Jumlah Slot -->
+      <div class="editor-section">
+        <div class="editor-section-title">2. Jumlah Slot Foto</div>
+        <div class="chip-row" id="edSlotChips">
+          <button class="chip" data-n="1">1 Foto</button>
+          <button class="chip" data-n="2">2 Foto</button>
+          <button class="chip" data-n="3">3 Foto</button>
+          <button class="chip active" data-n="4">4 Foto</button>
+        </div>
+        <div style="margin-top:8px;font-size:.75rem;color:var(--muted)">Mengubah jumlah slot akan reset posisi ke rata.</div>
+      </div>
+
+      <!-- Slot List -->
+      <div class="editor-section">
+        <div class="editor-section-title">3. Posisi Slot (klik untuk pilih)</div>
+        <div class="slot-list" id="edSlotList"></div>
+        <div style="margin-top:8px;display:flex;gap:6px">
+          <button class="chip" id="btnAutoSlots" style="font-size:.75rem;flex:1" onclick="autoDistributeSlots()">⚡ Auto Bagi Rata</button>
+        </div>
+      </div>
+
+      <!-- Nama -->
+      <div class="editor-section">
+        <div class="editor-section-title">4. Nama Frame</div>
+        <input type="text" id="edName" placeholder="Contoh: Keonho, Soft Pink, dll…">
+      </div>
+
+      <!-- Save -->
+      <button class="btn-primary" id="btnSaveFrame" style="width:100%" onclick="saveFrame()">💾 Simpan Frame</button>
+      <button class="btn-ghost" style="width:100%;margin-top:-6px" onclick="resetEditor()">🔄 Reset Editor</button>
+
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════
+     PAGE: SESI FOTO
+═══════════════════════════ -->
+<div class="page" id="page-shoot">
+  <div class="pg-header" style="margin-bottom:1.5rem">
+    <div>
+      <h1 id="shootTitle">Sesi Foto</h1>
+      <p id="shootSubtitle">Siapkan dirimu!</p>
+    </div>
+    <button class="btn-ghost" onclick="exitShoot()">← Kembali</button>
+  </div>
+
+  <div class="card">
+    <div class="shoot-layout">
+      <div>
+        <div class="cam-wrap" id="camWrap">
+          <canvas id="liveCanvas"></canvas>
+          <div class="slot-badge" id="slotBadge">Slot 1 dari 4</div>
+          <div id="cdEl"></div>
+          <div id="flashEl"></div>
+        </div>
+        <div class="pips" id="pips"></div>
+        <div class="shoot-ctrl">
+          <div>
+            <div class="ctrl-label">Timer per foto</div>
+            <div class="timer-row" id="timerRow">
+              <button class="tchip active" data-sec="0">Langsung</button>
+              <button class="tchip" data-sec="3">3 dtk</button>
+              <button class="tchip" data-sec="5">5 dtk</button>
+              <button class="tchip" data-sec="10">10 dtk</button>
+            </div>
+            <div class="cd-bar-wrap" id="cdBarWrap"><div class="cd-bar" id="cdBar"></div></div>
+          </div>
+          <button class="shutter" id="shutterBtn" onclick="startAutoLoop()">📷 Mulai — Foto Semua Slot</button>
+          <div class="status" id="statusTxt"></div>
+          <div style="display:flex;gap:8px">
+            <button class="btn-ghost" id="btnReset" onclick="retake()">🔄 Ulangi</button>
+            <button class="btn-ghost" onclick="exitShoot()">← Frame</button>
+          </div>
+        </div>
+      </div>
+      <div class="strip-col">
+        <div class="strip-lbl"><span>Preview</span><span id="slotCtr" style="color:var(--pink);font-weight:600">0/4</span></div>
+        <div class="strip-ph" id="stripPh">Foto pertama akan muncul di sini 📸</div>
+        <canvas id="stripCanvas"></canvas>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════
+     PAGE: HASIL
+═══════════════════════════ -->
+<div class="page" id="page-result">
+  <div class="card">
+    <div class="card-title">✨ Hasil Foto!</div>
+    <div class="result-layout">
+      <div class="result-img"><canvas id="finalCanvas"></canvas></div>
+      <div class="result-btns">
+        <div class="result-title">Siap diunduh! 🎉</div>
+        <div class="result-sub">Strip foto kamu sudah digabung dengan bingkai.</div>
+        <button class="dl-btn primary" onclick="dlFinal('png')">⬇️ Unduh PNG (terbaik)</button>
+        <button class="dl-btn" onclick="dlFinal('jpg')">🖼️ Unduh JPG</button>
+        <div class="divider"></div>
+        <button class="dl-btn" onclick="retake()">📷 Foto Ulang</button>
+        <button class="dl-btn" onclick="showPage('page-pick')">🖼️ Ganti Frame</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="notif" id="notif"></div>
+<video id="vid" autoplay playsinline muted style="display:none;position:absolute;left:-9999px;top:-9999px"></video>
+
+<script>
+/* ═══════════════════════════════════════════
+   DATA LAYER — localStorage
+═══════════════════════════════════════════ */
+const STORAGE_KEY = 'snapframe_frames_v2';
+
+function loadFrames() {
+  try { return JSON.parse(localStorage.getItem(STORAGE_KEY)) || []; }
+  catch { return []; }
+}
+
+function saveFrames(arr) {
+  // store everything except the live Image object (reconstruct on load)
+  const plain = arr.map(f => ({ id: f.id, name: f.name, dataUrl: f.dataUrl, w: f.w, h: f.h, slots: f.slots }));
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(plain));
+}
+
+// In-memory frames with hydrated Image objects
+let allFrames = [];
+
+async function hydrateFrames() {
+  const raw = loadFrames();
+  allFrames = await Promise.all(raw.map(async f => {
+    const img = await loadImage(f.dataUrl);
+    return { ...f, img };
+  }));
+}
+
+function loadImage(src) {
+  return new Promise((res, rej) => {
+    const i = new Image();
+    i.onload = () => res(i);
+    i.onerror = rej;
+    i.src = src;
+  });
+}
+
+/* ═══════════════════════════════════════════
+   PAGE NAVIGATION
+═══════════════════════════════════════════ */
+function showPage(id) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  // sync nav tabs
+  document.querySelectorAll('.nav-tab').forEach(t => {
+    t.classList.toggle('active',
+      (id === 'page-pick' && t.textContent.includes('Pilih')) ||
+      (id === 'page-editor' && t.textContent.includes('Tambah'))
+    );
+  });
+  if (id === 'page-pick') renderFrameGrid();
+  if (id !== 'page-shoot' && id !== 'page-result') stopCam();
+}
+
+/* ═══════════════════════════════════════════
+   PAGE 1 — PILIH FRAME
+═══════════════════════════════════════════ */
+let selectedFrameId = null;
+
+function renderFrameGrid() {
+  const wrap = document.getElementById('frame-grid-wrap');
+  if (!allFrames.length) {
+    wrap.innerHTML = `<div class="empty-state">
+      <div class="empty-state-icon">🖼️</div>
+      <h2>Belum ada frame</h2>
+      <p>Tambahkan frame pertamamu di halaman<br><strong>Tambah Frame</strong>.</p>
+      <button class="btn-primary" onclick="showPage('page-editor')">+ Tambah Frame Sekarang</button>
+    </div>`;
+    return;
+  }
+
+  wrap.innerHTML = `<div class="frame-grid">${allFrames.map(f => `
+    <div class="frame-card${f.id === selectedFrameId ? ' selected' : ''}" id="fc-${f.id}" onclick="selectFrame('${f.id}')">
+      ${f.id === selectedFrameId ? '<div class="frame-card-badge">Dipilih ✓</div>' : ''}
+      <div class="frame-thumb"><img src="${f.dataUrl}" alt="${f.name}"></div>
+      <div class="frame-card-body">
+        <div class="frame-card-name">${f.name}</div>
+        <div class="frame-card-meta">${f.slots.length} slot · ${f.w}×${f.h}px</div>
+        <div class="frame-card-actions">
+          <button class="fc-btn" onclick="event.stopPropagation();editFrame('${f.id}')">✏️ Edit</button>
+          <button class="fc-btn danger" onclick="event.stopPropagation();deleteFrame('${f.id}')">🗑️</button>
+        </div>
+      </div>
+    </div>
+  `).join('')}</div>`;
+
+  const bar = document.getElementById('startBar');
+  if (selectedFrameId) {
+    const f = allFrames.find(x => x.id === selectedFrameId);
+    document.getElementById('startBarName').textContent = f ? f.name : '—';
+    bar.classList.add('show');
+  } else {
+    bar.classList.remove('show');
+  }
+}
+
+function selectFrame(id) {
+  selectedFrameId = selectedFrameId === id ? null : id;
+  renderFrameGrid();
+}
+
+function deleteFrame(id) {
+  if (!confirm('Hapus frame ini?')) return;
+  allFrames = allFrames.filter(f => f.id !== id);
+  saveFrames(allFrames);
+  if (selectedFrameId === id) selectedFrameId = null;
+  renderFrameGrid();
+  showNotif('🗑️ Frame dihapus');
+}
+
+function editFrame(id) {
+  const f = allFrames.find(x => x.id === id);
+  if (!f) return;
+  loadFrameIntoEditor(f);
+  showPage('page-editor');
+}
+
+/* ═══════════════════════════════════════════
+   PAGE 2 — EDITOR
+═══════════════════════════════════════════ */
+let edFrame = null; // { img, dataUrl, w, h }
+let edSlots = [];   // [{x,y,w,h}, ...]
+let edSlotCount = 4;
+let edSelectedSlot = -1;
+let edEditingId = null; // if editing existing frame
+
+// drag state
+let dragMode = null; // 'draw' | 'move' | 'resize'
+let dragStart = {x:0, y:0};
+let dragSlotIdx = -1;
+let dragResizeHandle = ''; // 'nw','n','ne','e','se','s','sw','w'
+let dragOrigRect = null;
+let drawingRect = null;
+
+const HANDLE_SIZE = 8;
+
+function resetEditor() {
+  edFrame = null;
+  edSlots = [];
+  edSlotCount = 4;
+  edSelectedSlot = -1;
+  edEditingId = null;
+  document.getElementById('edName').value = '';
+  document.querySelectorAll('#edSlotChips .chip').forEach(b => b.classList.toggle('active', b.dataset.n === '4'));
+  renderEditorCanvas();
+  renderSlotList();
+}
+
+function loadFrameIntoEditor(f) {
+  edFrame = { img: f.img, dataUrl: f.dataUrl, w: f.w, h: f.h };
+  edSlots = f.slots.map(s => ({ ...s }));
+  edSlotCount = f.slots.length;
+  edSelectedSlot = -1;
+  edEditingId = f.id;
+  document.getElementById('edName').value = f.name;
+  document.querySelectorAll('#edSlotChips .chip').forEach(b => b.classList.toggle('active', +b.dataset.n === edSlotCount));
+  setupEditorCanvas();
+  renderEditorCanvas();
+  renderSlotList();
+}
+
+// upload
+const edFi = document.getElementById('edFi');
+const edDz = document.getElementById('edDz');
+edFi.onchange = e => handleEditorUpload(e.target.files[0]);
+edDz.addEventListener('dragover', e => { e.preventDefault(); edDz.classList.add('over'); });
+edDz.addEventListener('dragleave', () => edDz.classList.remove('over'));
+edDz.addEventListener('drop', e => { e.preventDefault(); edDz.classList.remove('over'); handleEditorUpload(e.dataTransfer.files[0]); });
+
+async function handleEditorUpload(file) {
+  if (!file || !file.type.startsWith('image/')) return;
+  const dataUrl = await fileToDataUrl(file);
+  const img = await loadImage(dataUrl);
+  edFrame = { img, dataUrl, w: img.naturalWidth, h: img.naturalHeight };
+  edSlots = [];
+  edSelectedSlot = -1;
+  setupEditorCanvas();
+  autoDistributeSlots();
+  showNotif('✅ Frame diupload');
+}
+
+function fileToDataUrl(file) {
+  return new Promise(res => {
+    const r = new FileReader();
+    r.onload = e => res(e.target.result);
+    r.readAsDataURL(file);
+  });
+}
+
+// slot count chips
+document.querySelectorAll('#edSlotChips .chip').forEach(b => {
+  b.onclick = () => {
+    document.querySelectorAll('#edSlotChips .chip').forEach(x => x.classList.remove('active'));
+    b.classList.add('active');
+    edSlotCount = +b.dataset.n;
+    autoDistributeSlots();
+  };
+});
+
+function autoDistributeSlots() {
+  if (!edFrame) { showNotif('Upload frame dulu!'); return; }
+  const { w, h } = edFrame;
+  const pad = Math.round(w * 0.04);
+  const slotH = Math.floor(h / edSlotCount);
+  edSlots = Array.from({ length: edSlotCount }, (_, i) => ({
+    x: pad, y: i * slotH,
+    w: w - pad * 2,
+    h: i === edSlotCount - 1 ? h - i * slotH : slotH
+  }));
+  edSelectedSlot = -1;
+  renderEditorCanvas();
+  renderSlotList();
+}
+
+function setupEditorCanvas() {
+  const c = document.getElementById('editorCanvas');
+  const wrap = document.getElementById('editorWrap');
+  const ww = wrap.getBoundingClientRect().width || 600;
+  const scale = ww / edFrame.w;
+  c.width = Math.round(ww);
+  c.height = Math.round(edFrame.h * scale);
+  c.style.width = '100%';
+  c.style.height = 'auto';
+  wrap.style.aspectRatio = edFrame.w + '/' + edFrame.h;
+}
+
+function edScale() {
+  const c = document.getElementById('editorCanvas');
+  return edFrame ? { sx: c.width / edFrame.w, sy: c.height / edFrame.h } : { sx: 1, sy: 1 };
+}
+
+function renderEditorCanvas() {
+  const c = document.getElementById('editorCanvas');
+  const ctx = c.getContext('2d');
+  const { sx, sy } = edScale();
+  ctx.clearRect(0, 0, c.width, c.height);
+
+  if (!edFrame) {
+    ctx.fillStyle = 'rgba(0,0,0,0.07)';
+    ctx.fillRect(0, 0, c.width, c.height);
+    ctx.fillStyle = '#8a7e72';
+    ctx.font = '500 14px DM Sans, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('Upload frame PNG untuk mulai', c.width / 2, c.height / 2 || 120);
+    return;
+  }
+
+  ctx.drawImage(edFrame.img, 0, 0, c.width, c.height);
+
+  // draw slots
+  const colors = ['#e8506a', '#3db87a', '#4e8ff7', '#f5a623'];
+  edSlots.forEach((s, i) => {
+    const dx = s.x * sx, dy = s.y * sy, dw = s.w * sx, dh = s.h * sy;
+    const col = colors[i % colors.length];
+    const isActive = i === edSelectedSlot;
+
+    ctx.save();
+    ctx.fillStyle = isActive ? 'rgba(232,80,106,0.18)' : 'rgba(0,0,0,0.25)';
+    ctx.fillRect(dx, dy, dw, dh);
+
+    ctx.strokeStyle = col;
+    ctx.lineWidth = isActive ? 3 : 2;
+    if (!isActive) ctx.setLineDash([6, 3]);
+    ctx.strokeRect(dx + 1, dy + 1, dw - 2, dh - 2);
+    ctx.setLineDash([]);
+
+    // label
+    ctx.fillStyle = col;
+    ctx.font = `700 ${Math.min(14, dh * 0.18)}px DM Sans, sans-serif`;
+    ctx.textAlign = 'left';
+    ctx.fillText(`Slot ${i + 1}`, dx + 8, dy + Math.min(20, dh * 0.25));
+
+    // resize handles if active
+    if (isActive) {
+      const hs = HANDLE_SIZE;
+      const handles = getHandlePositions(dx, dy, dw, dh);
+      Object.values(handles).forEach(([hx, hy]) => {
+        ctx.fillStyle = '#fff';
+        ctx.fillRect(hx - hs/2, hy - hs/2, hs, hs);
+        ctx.strokeStyle = col;
+        ctx.lineWidth = 2;
+        ctx.strokeRect(hx - hs/2, hy - hs/2, hs, hs);
+      });
+    }
+    ctx.restore();
+  });
+
+  // drawing new slot
+  if (drawingRect) {
+    const { x, y, w, h } = drawingRect;
+    ctx.save();
+    ctx.strokeStyle = '#e8506a';
+    ctx.lineWidth = 2;
+    ctx.setLineDash([5, 3]);
+    ctx.strokeRect(x, y, w, h);
+    ctx.fillStyle = 'rgba(232,80,106,0.1)';
+    ctx.fillRect(x, y, w, h);
+    ctx.restore();
+  }
+
+  ctx.drawImage(edFrame.img, 0, 0, c.width, c.height);
+}
+
+function getHandlePositions(dx, dy, dw, dh) {
+  return {
+    nw: [dx, dy], n: [dx + dw/2, dy], ne: [dx + dw, dy],
+    e:  [dx + dw, dy + dh/2],
+    se: [dx + dw, dy + dh], s: [dx + dw/2, dy + dh], sw: [dx, dy + dh],
+    w:  [dx, dy + dh/2]
+  };
+}
+
+function canvasPos(e) {
+  const c = document.getElementById('editorCanvas');
+  const rect = c.getBoundingClientRect();
+  const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+  const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+  return {
+    cx: (clientX - rect.left) * (c.width / rect.width),
+    cy: (clientY - rect.top) * (c.height / rect.height)
+  };
+}
+
+function hitTestHandles(slot, cx, cy) {
+  if (!edFrame) return null;
+  const { sx, sy } = edScale();
+  const dx = slot.x * sx, dy = slot.y * sy, dw = slot.w * sx, dh = slot.h * sy;
+  const hs = HANDLE_SIZE + 2;
+  const handles = getHandlePositions(dx, dy, dw, dh);
+  for (const [key, [hx, hy]] of Object.entries(handles)) {
+    if (Math.abs(cx - hx) <= hs && Math.abs(cy - hy) <= hs) return key;
+  }
+  return null;
+}
+
+function hitTestSlot(slot, cx, cy) {
+  if (!edFrame) return false;
+  const { sx, sy } = edScale();
+  const dx = slot.x * sx, dy = slot.y * sy, dw = slot.w * sx, dh = slot.h * sy;
+  return cx >= dx && cx <= dx + dw && cy >= dy && cy <= dy + dh;
+}
+
+// mouse / touch events
+const edc = document.getElementById('editorCanvas');
+edc.addEventListener('mousedown', startDrag);
+edc.addEventListener('mousemove', onDrag);
+edc.addEventListener('mouseup', endDrag);
+edc.addEventListener('mouseleave', endDrag);
+edc.addEventListener('touchstart', e => { e.preventDefault(); startDrag(e); }, { passive: false });
+edc.addEventListener('touchmove', e => { e.preventDefault(); onDrag(e); }, { passive: false });
+edc.addEventListener('touchend', e => { e.preventDefault(); endDrag(e); });
+
+function startDrag(e) {
+  if (!edFrame) return;
+  const { cx, cy } = canvasPos(e);
+  const { sx, sy } = edScale();
+  dragStart = { x: cx, y: cy };
+
+  // check resize handle on selected slot
+  if (edSelectedSlot >= 0) {
+    const handle = hitTestHandles(edSlots[edSelectedSlot], cx, cy);
+    if (handle) {
+      dragMode = 'resize';
+      dragSlotIdx = edSelectedSlot;
+      dragResizeHandle = handle;
+      dragOrigRect = { ...edSlots[edSelectedSlot] };
+      return;
+    }
+  }
+
+  // check click inside a slot (move)
+  for (let i = edSlots.length - 1; i >= 0; i--) {
+    if (hitTestSlot(edSlots[i], cx, cy)) {
+      edSelectedSlot = i;
+      dragMode = 'move';
+      dragSlotIdx = i;
+      dragOrigRect = { ...edSlots[i] };
+      renderEditorCanvas();
+      renderSlotList();
+      return;
+    }
+  }
+
+  // draw new slot (only if we haven't filled all slots)
+  edSelectedSlot = -1;
+  dragMode = 'draw';
+  drawingRect = { x: cx, y: cy, w: 0, h: 0 };
+  renderEditorCanvas();
+  renderSlotList();
+}
+
+function onDrag(e) {
+  if (!dragMode || !edFrame) return;
+  const { cx, cy } = canvasPos(e);
+  const dx = cx - dragStart.x, dy = cy - dragStart.y;
+  const { sx, sy } = edScale();
+
+  if (dragMode === 'draw') {
+    drawingRect = {
+      x: Math.min(dragStart.x, cx),
+      y: Math.min(dragStart.y, cy),
+      w: Math.abs(cx - dragStart.x),
+      h: Math.abs(cy - dragStart.y)
+    };
+    renderEditorCanvas();
+    return;
+  }
+
+  if (dragMode === 'move') {
+    const s = edSlots[dragSlotIdx];
+    s.x = Math.max(0, Math.min(edFrame.w - s.w, dragOrigRect.x + dx / sx));
+    s.y = Math.max(0, Math.min(edFrame.h - s.h, dragOrigRect.y + dy / sy));
+    s.x = Math.round(s.x); s.y = Math.round(s.y);
+    renderEditorCanvas();
+    renderSlotList();
+    return;
+  }
+
+  if (dragMode === 'resize') {
+    const o = dragOrigRect;
+    let nx = o.x, ny = o.y, nw = o.w, nh = o.h;
+    const ddx = dx / sx, ddy = dy / sy;
+    const h = dragResizeHandle;
+    if (h.includes('w')) { nx = o.x + ddx; nw = o.w - ddx; }
+    if (h.includes('e')) { nw = o.w + ddx; }
+    if (h.includes('n')) { ny = o.y + ddy; nh = o.h - ddy; }
+    if (h.includes('s')) { nh = o.h + ddy; }
+    if (nw < 20) { nw = 20; if (h.includes('w')) nx = o.x + o.w - 20; }
+    if (nh < 20) { nh = 20; if (h.includes('n')) ny = o.y + o.h - 20; }
+    nx = Math.max(0, Math.min(edFrame.w - nw, nx));
+    ny = Math.max(0, Math.min(edFrame.h - nh, ny));
+    edSlots[dragSlotIdx] = { x: Math.round(nx), y: Math.round(ny), w: Math.round(nw), h: Math.round(nh) };
+    renderEditorCanvas();
+    renderSlotList();
+  }
+}
+
+function endDrag(e) {
+  if (dragMode === 'draw' && drawingRect && drawingRect.w > 15 && drawingRect.h > 15) {
+    const { sx, sy } = edScale();
+    const newSlot = {
+      x: Math.round(drawingRect.x / sx), y: Math.round(drawingRect.y / sy),
+      w: Math.round(drawingRect.w / sx), h: Math.round(drawingRect.h / sy)
+    };
+    if (edSlots.length < edSlotCount) {
+      edSlots.push(newSlot);
+    } else {
+      // replace last
+      edSlots[edSlotCount - 1] = newSlot;
+      showNotif('⚠️ Slot diganti (sudah penuh)');
+    }
+    edSelectedSlot = edSlots.length - 1;
+    renderSlotList();
+  }
+  drawingRect = null;
+  dragMode = null;
+  dragSlotIdx = -1;
+  renderEditorCanvas();
+}
+
+function renderSlotList() {
+  const list = document.getElementById('edSlotList');
+  if (!edSlots.length) {
+    list.innerHTML = '<div style="font-size:.78rem;color:var(--muted);text-align:center;padding:.5rem">Belum ada slot. Auto bagi rata atau gambar manual.</div>';
+    return;
+  }
+  list.innerHTML = edSlots.map((s, i) => `
+    <div class="slot-item${i === edSelectedSlot ? ' active' : ''}" onclick="selectEdSlot(${i})">
+      <div class="slot-num">${i + 1}</div>
+      <div class="slot-coords">x:${s.x} y:${s.y} · ${s.w}×${s.h}</div>
+      <button style="width:20px;height:20px;border-radius:50%;border:1px solid var(--border2);background:transparent;cursor:pointer;font-size:9px;color:var(--muted)" onclick="event.stopPropagation();removeEdSlot(${i})">✕</button>
+    </div>
+  `).join('');
+}
+
+function selectEdSlot(i) {
+  edSelectedSlot = i === edSelectedSlot ? -1 : i;
+  renderEditorCanvas();
+  renderSlotList();
+}
+
+function removeEdSlot(i) {
+  edSlots.splice(i, 1);
+  if (edSelectedSlot >= edSlots.length) edSelectedSlot = edSlots.length - 1;
+  renderEditorCanvas();
+  renderSlotList();
+}
+
+function saveFrame() {
+  if (!edFrame) { showNotif('⚠️ Upload frame dulu!'); return; }
+  if (!edSlots.length) { showNotif('⚠️ Buat minimal 1 slot!'); return; }
+  const name = document.getElementById('edName').value.trim() || 'Frame ' + (allFrames.length + 1);
+
+  if (edEditingId) {
+    const idx = allFrames.findIndex(f => f.id === edEditingId);
+    if (idx >= 0) {
+      allFrames[idx] = { ...allFrames[idx], name, slots: edSlots.map(s => ({ ...s })), img: edFrame.img, dataUrl: edFrame.dataUrl, w: edFrame.w, h: edFrame.h };
+    }
+    showNotif('✅ Frame diperbarui!');
+  } else {
+    const id = 'f_' + Date.now();
+    allFrames.push({ id, name, dataUrl: edFrame.dataUrl, w: edFrame.w, h: edFrame.h, slots: edSlots.map(s => ({ ...s })), img: edFrame.img });
+    selectedFrameId = id;
+    showNotif('✅ Frame "' + name + '" disimpan!');
+  }
+
+  saveFrames(allFrames);
+  resetEditor();
+  showPage('page-pick');
+}
+
+/* ═══════════════════════════════════════════
+   PAGE 3 — SESI FOTO
+═══════════════════════════════════════════ */
+let activeFrame = null; // frame object from allFrames
+let camStream = null;
+let timerSec = 0;
+let curSlot = 0, shots = [];
+let autoLoopRunning = false;
+let cdInterval = null;
+let raf = null;
+
+function startShootSession() {
+  const f = allFrames.find(x => x.id === selectedFrameId);
+  if (!f) { showNotif('Pilih frame dulu!'); return; }
+  activeFrame = f;
+  curSlot = 0;
+  shots = [];
+  document.getElementById('shootTitle').textContent = f.name;
+  document.getElementById('shootSubtitle').textContent = f.slots.length + ' slot foto · Siapkan dirimu!';
+  document.getElementById('slotCtr').textContent = '0/' + f.slots.length;
+  showPage('page-shoot');
+  requestAnimationFrame(() => requestAnimationFrame(() => startCam()));
+  updateShootUI();
+}
+
+function exitShoot() {
+  abortLoop();
+  stopCam();
+  showPage('page-pick');
+}
+
+async function startCam() {
+  try {
+    const f = activeFrame;
+    const FW = f.w, FH = f.h;
+    camStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user', width: { ideal: 1280 }, height: { ideal: 960 } }, audio: false });
+    const v = document.getElementById('vid');
+    v.srcObject = camStream;
+    await v.play();
+    await new Promise(res => { (function poll() { (v.videoWidth > 0 && v.videoHeight > 0) ? res() : setTimeout(poll, 30); })(); });
+    setupLiveCanvas();
+    startDrawLoop();
+    updateShootUI();
+  } catch(e) {
+    showNotif('⚠️ Kamera: ' + e.message);
+    document.getElementById('statusTxt').textContent = 'Kamera tidak tersedia. ' + e.message;
+  }
+}
+
+function stopCam() {
+  if (raf) { cancelAnimationFrame(raf); raf = null; }
+  if (camStream) { camStream.getTracks().forEach(t => t.stop()); camStream = null; }
+}
+
+function setupLiveCanvas() {
+  const f = activeFrame;
+  const lc = document.getElementById('liveCanvas');
+  const wrap = document.getElementById('camWrap');
+  let W = wrap.getBoundingClientRect().width;
+  if (!W || W < 50) W = Math.min(window.innerWidth - 100, 700);
+  lc.width = Math.round(W);
+  lc.height = Math.round(W * (f.h / f.w));
+  lc.style.width = '100%';
+  lc.style.height = 'auto';
+  wrap.style.aspectRatio = f.w + '/' + f.h;
+}
+
+function startDrawLoop() {
+  if (raf) { cancelAnimationFrame(raf); raf = null; }
+  const f = activeFrame;
+  const lc = document.getElementById('liveCanvas');
+  const v = document.getElementById('vid');
+  const ctx = lc.getContext('2d');
+
+  function draw() {
+    const cW = lc.width, cH = lc.height;
+    if (!cW || !cH) { raf = requestAnimationFrame(draw); return; }
+    const scX = cW / f.w, scY = cH / f.h;
+
+    ctx.fillStyle = '#fff';
+    ctx.fillRect(0, 0, cW, cH);
+
+    // draw captured shots
+    for (let i = 0; i < shots.length; i++) {
+      if (shots[i] && f.slots[i]) blitImg(ctx, shots[i], f.slots[i], scX, scY);
+    }
+
+    // draw live cam in current slot
+    const r = f.slots[curSlot];
+    const hasVideo = camStream && v.readyState >= 2 && v.videoWidth > 0;
+    if (curSlot < f.slots.length && r && hasVideo) {
+      const dx = r.x*scX, dy = r.y*scY, dw = r.w*scX, dh = r.h*scY;
+      if (dw > 0 && dh > 0) {
+        const { sx, sy, sw, sh } = coverCrop(v.videoWidth, v.videoHeight, dw, dh);
+        ctx.save();
+        ctx.beginPath(); ctx.rect(dx, dy, dw, dh); ctx.clip();
+        ctx.translate(dx + dw, dy); ctx.scale(-1, 1);
+        ctx.drawImage(v, sx, sy, sw, sh, 0, 0, dw, dh);
+        ctx.restore();
+        ctx.save();
+        ctx.strokeStyle = 'rgba(232,80,106,0.9)';
+        ctx.lineWidth = Math.max(2, 4 * Math.min(scX, scY));
+        ctx.strokeRect(dx+1, dy+1, dw-2, dh-2);
+        ctx.restore();
+      }
+    }
+
+    // dim future slots
+    for (let i = curSlot + 1; i < f.slots.length; i++) {
+      const rr = f.slots[i];
+      ctx.fillStyle = 'rgba(150,150,150,0.2)';
+      ctx.fillRect(rr.x*scX, rr.y*scY, rr.w*scX, rr.h*scY);
+    }
+
+    ctx.drawImage(f.img, 0, 0, cW, cH);
+    raf = requestAnimationFrame(draw);
+  }
+  draw();
+}
+
+function coverCrop(sw, sh, dw, dh) {
+  const sr = sw/sh, dr = dw/dh;
+  let W, H, x, y;
+  if (sr > dr) { H = sh; W = H*dr; x = (sw-W)/2; y = 0; }
+  else { W = sw; H = W/dr; x = 0; y = (sh-H)/2; }
+  return { sx: x, sy: y, sw: W, sh: H };
+}
+
+function blitImg(ctx, img, rect, scX, scY) {
+  const dx = rect.x*scX, dy = rect.y*scY, dw = rect.w*scX, dh = rect.h*scY;
+  if (dw <= 0 || dh <= 0 || !img.width || !img.height) return;
+  const sr = img.width/img.height, dr = dw/dh;
+  let sx, sy, sw, sh;
+  if (sr > dr) { sh = img.height; sw = sh*dr; sx = (img.width-sw)/2; sy = 0; }
+  else { sw = img.width; sh = sw/dr; sx = 0; sy = (img.height-sh)/2; }
+  ctx.save();
+  ctx.beginPath(); ctx.rect(dx, dy, dw, dh); ctx.clip();
+  ctx.drawImage(img, sx, sy, sw, sh, dx, dy, dw, dh);
+  ctx.restore();
+}
+
+// timer chips
+document.querySelectorAll('.tchip').forEach(b => {
+  b.onclick = () => {
+    if (autoLoopRunning) return;
+    document.querySelectorAll('.tchip').forEach(x => x.classList.remove('active'));
+    b.classList.add('active');
+    timerSec = +b.dataset.sec;
+  };
+});
+
+function startAutoLoop() {
+  if (autoLoopRunning || !activeFrame) return;
+  if (curSlot >= activeFrame.slots.length) return;
+  autoLoopRunning = true;
+  lockShootUI(true);
+  shootNext();
+}
+
+function abortLoop() {
+  autoLoopRunning = false;
+  if (cdInterval) { clearInterval(cdInterval); cdInterval = null; }
+  hideCd(); hideBar();
+  lockShootUI(false);
+}
+
+function shootNext() {
+  if (!autoLoopRunning || !activeFrame || curSlot >= activeFrame.slots.length) {
+    autoLoopRunning = false; lockShootUI(false); return;
+  }
+  updateShootUI();
+  if (timerSec <= 0) {
+    setTimeout(() => {
+      snap();
+      if (curSlot < activeFrame.slots.length) setTimeout(shootNext, 400);
+      else finishSession();
+    }, 150);
+  } else {
+    countdownThen(timerSec, () => {
+      snap();
+      if (curSlot < activeFrame.slots.length) setTimeout(shootNext, 400);
+      else finishSession();
+    });
+  }
+}
+
+function countdownThen(n, cb) {
+  const el = document.getElementById('cdEl');
+  const barWrap = document.getElementById('cdBarWrap');
+  const bar = document.getElementById('cdBar');
+  el.style.opacity = '1';
+  el.textContent = n;
+  el.classList.remove('pop'); void el.offsetWidth; el.classList.add('pop');
+  barWrap.classList.add('show');
+  bar.style.transition = 'none'; bar.style.width = '100%'; void bar.offsetWidth;
+  bar.style.transition = 'width ' + n + 's linear'; bar.style.width = '0%';
+  let remaining = n;
+  document.getElementById('statusTxt').textContent = 'Bersiap… ' + remaining + ' detik';
+  cdInterval = setInterval(() => {
+    remaining--;
+    if (remaining <= 0) {
+      clearInterval(cdInterval); cdInterval = null;
+      hideCd(); hideBar(); cb();
+    } else {
+      el.textContent = remaining;
+      el.classList.remove('pop'); void el.offsetWidth; el.classList.add('pop');
+      document.getElementById('statusTxt').textContent = 'Bersiap… ' + remaining + ' detik';
+    }
+  }, 1000);
+}
+
+function hideCd() { const el = document.getElementById('cdEl'); el.style.opacity = '0'; el.textContent = ''; }
+function hideBar() { document.getElementById('cdBarWrap').classList.remove('show'); }
+
+function lockShootUI(locked) {
+  document.getElementById('shutterBtn').disabled = locked;
+  document.getElementById('btnReset').disabled = locked;
+  document.querySelectorAll('.tchip').forEach(b => b.disabled = locked);
+  if (locked) document.getElementById('shutterBtn').textContent = '⏳ Sedang berlangsung…';
+}
+
+function finishSession() {
+  autoLoopRunning = false;
+  lockShootUI(false);
+  document.getElementById('statusTxt').textContent = '🎉 Selesai! Menyusun hasil…';
+  setTimeout(buildFinal, 700);
+}
+
+function snap() {
+  const v = document.getElementById('vid');
+  if (!v.videoWidth) { showNotif('⚠️ Kamera belum siap'); return; }
+  const fl = document.getElementById('flashEl');
+  fl.style.opacity = '0.9'; setTimeout(() => fl.style.opacity = '0', 200);
+  const c = document.createElement('canvas');
+  c.width = v.videoWidth; c.height = v.videoHeight;
+  const cx = c.getContext('2d');
+  cx.translate(c.width, 0); cx.scale(-1, 1);
+  cx.drawImage(v, 0, 0);
+  shots[curSlot] = c;
+  curSlot++;
+  renderStrip();
+  updateShootUI();
+}
+
+function updateShootUI() {
+  if (!activeFrame) return;
+  const btn = document.getElementById('shutterBtn');
+  const ctr = document.getElementById('slotCtr');
+  const pipsEl = document.getElementById('pips');
+  const badge = document.getElementById('slotBadge');
+  const status = document.getElementById('statusTxt');
+  const n = activeFrame.slots.length;
+
+  ctr.textContent = curSlot + '/' + n;
+  badge.textContent = curSlot < n ? 'Slot ' + (curSlot + 1) + ' dari ' + n : 'Selesai ✨';
+
+  pipsEl.innerHTML = '';
+  for (let i = 0; i < n; i++) {
+    const p = document.createElement('div');
+    p.className = 'pip' + (i < curSlot ? ' done' : i === curSlot ? ' active' : '');
+    pipsEl.appendChild(p);
+  }
+
+  if (!autoLoopRunning) {
+    if (curSlot < n) {
+      btn.disabled = false;
+      btn.textContent = curSlot === 0 ? '📷 Mulai — Foto Semua Slot' : '📷 Lanjut dari Slot ' + (curSlot + 1);
+      status.textContent = curSlot === 0 ? 'Siap! Tekan tombol untuk mulai 😊' : curSlot === n - 1 ? 'Terakhir! 🎯' : 'Bagus! ' + (n - curSlot) + ' lagi.';
+    } else {
+      btn.disabled = true; btn.textContent = '✅ Selesai';
+    }
+  }
+}
+
+function renderStrip() {
+  const sc = document.getElementById('stripCanvas');
+  const ph = document.getElementById('stripPh');
+  const f = activeFrame;
+  if (!shots.length || !f) { sc.style.display = 'none'; ph.style.display = 'flex'; return; }
+  ph.style.display = 'none'; sc.style.display = 'block';
+  sc.width = f.w; sc.height = f.h;
+  sc.style.width = '160px'; sc.style.height = 'auto';
+  const ctx = sc.getContext('2d');
+  ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, f.w, f.h);
+  for (let i = 0; i < shots.length; i++) {
+    if (shots[i] && f.slots[i]) blitImg(ctx, shots[i], f.slots[i], 1, 1);
+  }
+  ctx.drawImage(f.img, 0, 0, f.w, f.h);
+}
+
+function retake() {
+  abortLoop();
+  curSlot = 0; shots = [];
+  renderStrip();
+  if (document.getElementById('page-shoot').classList.contains('active')) {
+    updateShootUI();
+    if (camStream) { setupLiveCanvas(); startDrawLoop(); }
+  }
+}
+
+function buildFinal() {
+  const f = activeFrame;
+  const fc = document.getElementById('finalCanvas');
+  fc.width = f.w; fc.height = f.h;
+  const ctx = fc.getContext('2d');
+  ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, f.w, f.h);
+  for (let i = 0; i < f.slots.length; i++) {
+    if (shots[i] && f.slots[i]) blitImg(ctx, shots[i], f.slots[i], 1, 1);
+  }
+  ctx.drawImage(f.img, 0, 0, f.w, f.h);
+  stopCam();
+  showPage('page-result');
+}
+
+/* ═══════════════════════════════════════════
+   DOWNLOAD
+═══════════════════════════════════════════ */
+function dlFinal(fmt) {
+  const fc = document.getElementById('finalCanvas');
+  const a = document.createElement('a');
+  a.href = fmt === 'png' ? fc.toDataURL('image/png') : fc.toDataURL('image/jpeg', .93);
+  a.download = 'snapframe-' + Date.now() + '.' + (fmt === 'png' ? 'png' : 'jpg');
+  a.click();
+  showNotif('✅ ' + fmt.toUpperCase() + ' berhasil diunduh!');
+}
+
+/* ═══════════════════════════════════════════
+   NOTIF
+═══════════════════════════════════════════ */
+function showNotif(msg) {
+  const el = document.getElementById('notif');
+  el.textContent = msg;
+  el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), 3000);
+}
+
+/* ═══════════════════════════════════════════
+   INIT
+═══════════════════════════════════════════ */
+(async function init() {
+  await hydrateFrames();
+  renderFrameGrid();
+  renderEditorCanvas();
+})();
+</script>
+</body>
+</html>

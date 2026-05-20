@@ -1,0 +1,811 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Contact — Syahrul Rizal</title>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=DM+Sans:wght@300;400;500&display=swap"
+        rel="stylesheet">
+    <style>
+        *,
+        *::before,
+        *::after {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box
+        }
+
+        :root {
+            --black: #0a0a0a;
+            --white: #f5f3ef;
+            --accent: #c8a96e;
+            --muted: #6b6560;
+            --card-bg: #141414;
+            --border: rgba(200, 169, 110, 0.2)
+        }
+
+        html {
+            scroll-behavior: smooth
+        }
+
+        body {
+            font-family: 'DM Sans', sans-serif;
+            background: var(--black);
+            color: var(--white);
+            overflow-x: hidden;
+            cursor: none;
+            min-height: 100vh
+        }
+
+        .cursor {
+            position: fixed;
+            width: 10px;
+            height: 10px;
+            background: var(--accent);
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 9999;
+            mix-blend-mode: difference
+        }
+
+        .cursor-ring {
+            position: fixed;
+            width: 36px;
+            height: 36px;
+            border: 1.5px solid var(--accent);
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 9998;
+            transition: width 0.25s, height 0.25s, opacity 0.25s;
+            mix-blend-mode: difference
+        }
+
+        .cursor-ring.expand {
+            width: 60px;
+            height: 60px;
+            opacity: 0.5
+        }
+
+        nav {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 100;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 2rem 4rem;
+            background: rgba(10, 10, 10, 0.9);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--border)
+        }
+
+        .nav-logo {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 1.6rem;
+            font-weight: 300;
+            letter-spacing: 0.1em;
+            color: var(--white);
+            text-decoration: none
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 3rem;
+            list-style: none
+        }
+
+        .nav-links a {
+            font-size: 0.75rem;
+            letter-spacing: 0.2em;
+            text-transform: uppercase;
+            color: var(--muted);
+            text-decoration: none;
+            position: relative;
+            transition: color 0.3s
+        }
+
+        .nav-links a::after {
+            content: '';
+            position: absolute;
+            bottom: -4px;
+            left: 0;
+            width: 0;
+            height: 1px;
+            background: var(--accent);
+            transition: width 0.4s
+        }
+
+        .nav-links a:hover,
+        .nav-links a.active {
+            color: var(--white)
+        }
+
+        .nav-links a:hover::after,
+        .nav-links a.active::after {
+            width: 100%
+        }
+
+        /* CONTACT LAYOUT */
+        .contact-wrap {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            min-height: 100vh;
+            padding-top: 7rem
+        }
+
+        /* LEFT PANEL */
+        .contact-left {
+            padding: 6rem 4rem;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            border-right: 1px solid var(--border);
+            position: relative;
+            overflow: hidden
+        }
+
+        .contact-left::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: radial-gradient(ellipse 70% 70% at 30% 60%, rgba(200, 169, 110, 0.05) 0%, transparent 70%)
+        }
+
+        .big-num {
+            position: absolute;
+            right: -2rem;
+            top: 5rem;
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 20vw;
+            font-weight: 300;
+            color: rgba(200, 169, 110, 0.04);
+            line-height: 1;
+            pointer-events: none;
+            white-space: nowrap
+        }
+
+        .page-tag {
+            font-size: 0.65rem;
+            letter-spacing: 0.3em;
+            text-transform: uppercase;
+            color: var(--accent);
+            margin-bottom: 1.5rem
+        }
+
+        .contact-headline {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: clamp(3rem, 5vw, 6rem);
+            font-weight: 300;
+            line-height: 1;
+            letter-spacing: -0.02em;
+            margin-bottom: 2rem;
+            position: relative;
+            z-index: 2
+        }
+
+        .contact-headline em {
+            font-style: italic;
+            color: var(--accent)
+        }
+
+        .contact-subtext {
+            font-size: 0.9rem;
+            color: var(--muted);
+            line-height: 1.8;
+            max-width: 380px;
+            margin-bottom: 4rem;
+            position: relative;
+            z-index: 2
+        }
+
+        .contact-info-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0;
+            position: relative;
+            z-index: 2
+        }
+
+        .contact-info-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1.5rem 0;
+            border-bottom: 1px solid var(--border)
+        }
+
+        .contact-info-label {
+            font-size: 0.65rem;
+            letter-spacing: 0.2em;
+            text-transform: uppercase;
+            color: var(--muted)
+        }
+
+        .contact-info-val {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 1.1rem;
+            font-weight: 300;
+            color: var(--white);
+            text-decoration: none;
+            transition: color 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem
+        }
+
+        .contact-info-val:hover {
+            color: var(--accent)
+        }
+
+        .contact-info-val .arrow {
+            opacity: 0;
+            transform: translateX(-6px);
+            transition: opacity 0.3s, transform 0.3s
+        }
+
+        .contact-info-val:hover .arrow {
+            opacity: 1;
+            transform: translateX(0)
+        }
+
+        .contact-availability {
+            margin-top: 3rem;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            position: relative;
+            z-index: 2
+        }
+
+        .avail-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #4ade80;
+            animation: blink 2s ease-in-out infinite
+        }
+
+        @keyframes blink {
+
+            0%,
+            100% {
+                opacity: 1
+            }
+
+            50% {
+                opacity: 0.3
+            }
+        }
+
+        .avail-text {
+            font-size: 0.75rem;
+            letter-spacing: 0.15em;
+            text-transform: uppercase;
+            color: var(--muted)
+        }
+
+        .avail-text span {
+            color: #4ade80
+        }
+
+        /* RIGHT PANEL - FORM */
+        .contact-right {
+            padding: 6rem 4rem;
+            display: flex;
+            flex-direction: column;
+            justify-content: center
+        }
+
+        .form-title {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 2rem;
+            font-weight: 300;
+            margin-bottom: 3rem
+        }
+
+        .form-group {
+            margin-bottom: 2rem;
+            position: relative
+        }
+
+        .form-label {
+            font-size: 0.62rem;
+            letter-spacing: 0.25em;
+            text-transform: uppercase;
+            color: var(--muted);
+            display: block;
+            margin-bottom: 0.75rem
+        }
+
+        .form-input,
+        .form-textarea,
+        .form-select {
+            width: 100%;
+            background: none;
+            border: none;
+            border-bottom: 1px solid var(--border);
+            padding: 0.75rem 0;
+            font-family: 'DM Sans', sans-serif;
+            font-size: 0.95rem;
+            color: var(--white);
+            outline: none;
+            transition: border-color 0.3s;
+            cursor: none
+        }
+
+        .form-input::placeholder,
+        .form-textarea::placeholder {
+            color: rgba(107, 101, 96, 0.5)
+        }
+
+        .form-input:focus,
+        .form-textarea:focus,
+        .form-select:focus {
+            border-bottom-color: var(--accent)
+        }
+
+        .form-textarea {
+            resize: none;
+            height: 100px;
+            display: block
+        }
+
+        .form-select {
+            appearance: none;
+            cursor: none
+        }
+
+        .form-select option {
+            background: var(--black);
+            color: var(--white)
+        }
+
+        .form-border-anim {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 0;
+            height: 1px;
+            background: var(--accent);
+            transition: width 0.4s cubic-bezier(0.22, 1, 0.36, 1)
+        }
+
+        .form-input:focus~.form-border-anim,
+        .form-textarea:focus~.form-border-anim,
+        .form-select:focus~.form-border-anim {
+            width: 100%
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem
+        }
+
+        .submit-btn {
+            width: 100%;
+            padding: 1.25rem;
+            border: 1px solid var(--accent);
+            background: none;
+            color: var(--white);
+            font-family: 'DM Sans', sans-serif;
+            font-size: 0.75rem;
+            letter-spacing: 0.25em;
+            text-transform: uppercase;
+            cursor: none;
+            transition: all 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+            margin-top: 1rem;
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 1rem
+        }
+
+        .submit-btn::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: var(--accent);
+            transform: scaleX(0);
+            transform-origin: left;
+            transition: transform 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+            z-index: -1
+        }
+
+        .submit-btn:hover {
+            color: var(--black)
+        }
+
+        .submit-btn:hover::before {
+            transform: scaleX(1)
+        }
+
+        .submit-btn.sent {
+            border-color: #4ade80;
+            color: #4ade80
+        }
+
+        .submit-btn.sent::before {
+            background: #4ade80;
+            transform: scaleX(0)
+        }
+
+        /* SOCIAL */
+        .social-strip {
+            margin-top: auto;
+            padding-top: 4rem;
+            border-top: 1px solid var(--border)
+        }
+
+        .social-label {
+            font-size: 0.62rem;
+            letter-spacing: 0.25em;
+            text-transform: uppercase;
+            color: var(--muted);
+            margin-bottom: 1.5rem
+        }
+
+        .social-links {
+            display: flex;
+            gap: 1.5rem
+        }
+
+        .social-link {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 1.1rem;
+            font-weight: 300;
+            color: var(--muted);
+            text-decoration: none;
+            transition: color 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem
+        }
+
+        .social-link:hover {
+            color: var(--accent)
+        }
+
+        footer {
+            padding: 3rem 4rem;
+            border-top: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center
+        }
+
+        .footer-copy {
+            font-size: 0.75rem;
+            color: var(--muted);
+            letter-spacing: 0.1em
+        }
+
+        .footer-logo {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 1.2rem;
+            font-weight: 300;
+            letter-spacing: 0.1em;
+            color: rgba(255, 255, 255, 0.3)
+        }
+
+        .footer-links {
+            display: flex;
+            gap: 2rem
+        }
+
+        .footer-links a {
+            font-size: 0.7rem;
+            letter-spacing: 0.15em;
+            text-transform: uppercase;
+            color: var(--muted);
+            text-decoration: none;
+            transition: color 0.3s
+        }
+
+        .footer-links a:hover {
+            color: var(--accent)
+        }
+
+        .reveal {
+            opacity: 0;
+            transform: translateY(24px);
+            transition: opacity 0.9s cubic-bezier(0.22, 1, 0.36, 1), transform 0.9s cubic-bezier(0.22, 1, 0.36, 1)
+        }
+
+        .reveal.in-view {
+            opacity: 1;
+            transform: translateY(0)
+        }
+
+        .reveal-delay-1 {
+            transition-delay: 0.1s
+        }
+
+        .reveal-delay-2 {
+            transition-delay: 0.2s
+        }
+
+        .reveal-delay-3 {
+            transition-delay: 0.3s
+        }
+
+        .magnetic {
+            display: inline-block;
+            transition: transform 0.3s cubic-bezier(0.22, 1, 0.36, 1)
+        }
+
+        @media(max-width:900px) {
+            nav {
+                padding: 1.5rem 2rem
+            }
+
+            .contact-wrap {
+                grid-template-columns: 1fr
+            }
+
+            .contact-left {
+                border-right: none;
+                border-bottom: 1px solid var(--border);
+                padding: 4rem 2rem
+            }
+
+            .contact-right {
+                padding: 4rem 2rem
+            }
+
+            .form-row {
+                grid-template-columns: 1fr
+            }
+
+            footer {
+                flex-direction: column;
+                gap: 1rem;
+                text-align: center;
+                padding: 2rem
+            }
+
+            .footer-links {
+                flex-direction: column;
+                align-items: center
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="cursor" id="cursor"></div>
+    <div class="cursor-ring" id="cursorRing"></div>
+
+    <nav>
+        <a href="index.html" class="nav-logo">SR</a>
+        <ul class="nav-links">
+            <li><a href="index.html#about">About</a></li>
+            <li><a href="work.html">Work</a></li>
+            <li><a href="about.html">Story</a></li>
+            <li><a href="contact.html" class="active">Contact</a></li>
+        </ul>
+    </nav>
+
+    <div class="contact-wrap">
+        <!-- LEFT -->
+        <div class="contact-left">
+            <div class="big-num">04</div>
+            <div>
+                <p class="page-tag reveal">Let's Connect</p>
+                <h1 class="contact-headline reveal reveal-delay-1">Start a<br><em>conversation.</em></h1>
+                <p class="contact-subtext reveal reveal-delay-2">Punya proyek, mau kolaborasi, atau sekadar ingin
+                    berkenalan — saya terbuka untuk semuanya. Biasanya saya balas dalam 24 jam.</p>
+
+                <div class="contact-info-list reveal reveal-delay-3">
+                    <div class="contact-info-item">
+                        <span class="contact-info-label">Email</span>
+                        <a href="mailto:syahrulrizal010108@gmail.com"
+                            class="contact-info-val">syahrulrizal010108@gmail.com <span class="arrow">→</span></a>
+                    </div>
+                    <div class="contact-info-item">
+                        <span class="contact-info-label">Based in</span>
+                        <span class="contact-info-val">Bogor, Indonesia</span>
+                    </div>
+                    <div class="contact-info-item">
+                        <span class="contact-info-label">Time Zone</span>
+                        <span class="contact-info-val">WIB · UTC+7</span>
+                    </div>
+                    <div class="contact-info-item">
+                        <span class="contact-info-label">Response Time</span>
+                        <span class="contact-info-val">Within 24 hours</span>
+                    </div>
+                </div>
+
+                <div class="contact-availability reveal">
+                    <div class="avail-dot"></div>
+                    <span class="avail-text">Currently <span>open</span> for internships & projects</span>
+                </div>
+            </div>
+
+            <div class="social-strip reveal">
+                <div class="social-label">Find me online</div>
+                <div class="social-links">
+                    <a href="#" class="social-link">LinkedIn →</a>
+                    <a href="#" class="social-link">GitHub →</a>
+                    <a href="#" class="social-link">Instagram →</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- RIGHT - FORM -->
+        <div class="contact-right">
+            <h2 class="form-title reveal">Send a message</h2>
+
+            <div class="form-row">
+                <div class="form-group reveal">
+                    <label class="form-label">First Name</label>
+                    <input type="text" class="form-input" placeholder="Your first name" id="fname">
+                    <div class="form-border-anim"></div>
+                </div>
+                <div class="form-group reveal reveal-delay-1">
+                    <label class="form-label">Last Name</label>
+                    <input type="text" class="form-input" placeholder="Your last name" id="lname">
+                    <div class="form-border-anim"></div>
+                </div>
+            </div>
+
+            <div class="form-group reveal reveal-delay-1">
+                <label class="form-label">Email Address</label>
+                <input type="email" class="form-input" placeholder="your@email.com" id="email">
+                <div class="form-border-anim"></div>
+            </div>
+
+            <div class="form-group reveal reveal-delay-2">
+                <label class="form-label">Project Type</label>
+                <select class="form-select" id="ptype">
+                    <option value="" disabled selected>Select a project type</option>
+                    <option value="web">Web Design & Development</option>
+                    <option value="uiux">UI/UX Design (Figma)</option>
+                    <option value="laravel">Laravel / Backend</option>
+                    <option value="frontend">Frontend Development</option>
+                    <option value="internship">Internship Opportunity</option>
+                    <option value="fulltime">Full-time Opportunity</option>
+                    <option value="other">Other / Just Saying Hi</option>
+                </select>
+                <div class="form-border-anim"></div>
+            </div>
+
+            <div class="form-group reveal reveal-delay-2">
+                <label class="form-label">Budget Range (optional)</label>
+                <select class="form-select" id="budget">
+                    <option value="" disabled selected>Approximate budget</option>
+                    <option value="small">Under Rp 1.000.000</option>
+                    <option value="med">Rp 1.000.000 – Rp 5.000.000</option>
+                    <option value="large">Rp 5.000.000 – Rp 15.000.000</option>
+                    <option value="xlarge">Rp 15.000.000+</option>
+                    <option value="na">N/A / Let's discuss</option>
+                </select>
+                <div class="form-border-anim"></div>
+            </div>
+
+            <div class="form-group reveal reveal-delay-3">
+                <label class="form-label">Message</label>
+                <textarea class="form-textarea"
+                    placeholder="Ceritakan proyekmu, tujuan, atau timeline yang kamu punya..." id="message"></textarea>
+                <div class="form-border-anim"></div>
+            </div>
+
+            <button class="submit-btn reveal magnetic" id="submitBtn" onclick="handleSubmit()">
+                <span id="btnText">Send Message</span>
+                <span id="btnArrow">→</span>
+            </button>
+        </div>
+    </div>
+
+    <footer>
+        <span class="footer-copy">© 2025 Syahrul Rizal. All rights reserved.</span>
+        <span class="footer-logo">SR</span>
+        <div class="footer-links">
+            <a href="work.html">Work</a>
+            <a href="about.html">About</a>
+            <a href="contact.html">Contact</a>
+        </div>
+    </footer>
+
+    <script>
+        const cursor = document.getElementById('cursor'),
+            ring = document.getElementById('cursorRing');
+        let mx = 0,
+            my = 0,
+            rx = 0,
+            ry = 0;
+        document.addEventListener('mousemove', e => {
+            mx = e.clientX;
+            my = e.clientY;
+            cursor.style.left = mx - 5 + 'px';
+            cursor.style.top = my - 5 + 'px'
+        });
+
+        function animRing() {
+            rx += (mx - rx - 18) * 0.12;
+            ry += (my - ry - 18) * 0.12;
+            ring.style.left = rx + 'px';
+            ring.style.top = ry + 'px';
+            requestAnimationFrame(animRing)
+        }
+        animRing();
+        document.querySelectorAll('a,button,.social-link').forEach(el => {
+            el.addEventListener('mouseenter', () => ring.classList.add('expand'));
+            el.addEventListener('mouseleave', () => ring.classList.remove('expand'))
+        });
+        const obs = new IntersectionObserver(entries => {
+            entries.forEach(e => {
+                if (e.isIntersecting) e.target.classList.add('in-view')
+            })
+        }, {
+            threshold: 0.1
+        });
+        document.querySelectorAll('.reveal').forEach(el => obs.observe(el));
+        document.querySelectorAll('.magnetic').forEach(el => {
+            el.addEventListener('mousemove', e => {
+                const r = el.getBoundingClientRect();
+                const x = e.clientX - r.left - r.width / 2;
+                const y = e.clientY - r.top - r.height / 2;
+                el.style.transform = `translate(${x*0.25}px,${y*0.25}px)`
+            });
+            el.addEventListener('mouseleave', () => el.style.transform = '')
+        });
+
+        function handleSubmit() {
+            const fname = document.getElementById('fname').value;
+            const email = document.getElementById('email').value;
+            const message = document.getElementById('message').value;
+            if (!fname || !email || !message) {
+                const btn = document.getElementById('submitBtn');
+                btn.style.animation = 'shake 0.4s ease';
+                setTimeout(() => btn.style.animation = '', 400);
+                return;
+            }
+            const btn = document.getElementById('submitBtn');
+            document.getElementById('btnText').textContent = 'Sending...';
+            document.getElementById('btnArrow').textContent = '⟳';
+            setTimeout(() => {
+                btn.classList.add('sent');
+                document.getElementById('btnText').textContent = 'Message Sent!';
+                document.getElementById('btnArrow').textContent = '✓';
+                setTimeout(() => {
+                    btn.classList.remove('sent');
+                    document.getElementById('btnText').textContent = 'Send Message';
+                    document.getElementById('btnArrow').textContent = '→';
+                    ['fname', 'lname', 'email', 'message'].forEach(id => {
+                        document.getElementById(id).value = ''
+                    });
+                    document.getElementById('ptype').selectedIndex = 0;
+                    document.getElementById('budget').selectedIndex = 0;
+                }, 4000);
+            }, 1500);
+        }
+    </script>
+    <style>
+        @keyframes shake {
+
+            0%,
+            100% {
+                transform: translateX(0)
+            }
+
+            20%,
+            60% {
+                transform: translateX(-8px)
+            }
+
+            40%,
+            80% {
+                transform: translateX(8px)
+            }
+        }
+    </style>
+</body>
+
+</html>
